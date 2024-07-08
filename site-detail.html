@@ -71,19 +71,7 @@
 
                                 <div class="px-4 py-6 sm:px-6 comment-item">
                                   <ul id="comment-list-container" role="list" class="space-y-8">
-                                    <li>
-                                      <div class="flex space-x-3">                                       
-                                        <div>                                        
-                                          <div class="mt-1 text-sm text-gray-700">
-                                            <p class="comment-text">Sample Comment</p>
-                                          </div>
-                                          <div class="mt-2 text-sm space-x-2">                                           
-                                            <button type="button" class="text-gray-900 font-medium">Delete</button>
-                                            <button type="button" class="text-gray-900 font-medium">Update</button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </li>                  
+                                                     
                                   </ul>
                                 </div>
                               </div>
@@ -95,8 +83,8 @@
                                         <label for="comment" class="sr-only">About</label>
                                         <textarea id="comment" name="comment" rows="3" class="shadow-sm block w-full focus:ring-blue-500 focus:border-blue-500 sm:text-sm border border-gray-300 rounded-md" placeholder="Add comment"></textarea>
                                       </div>
-                                      <div onclick="onCommentButtonClicked()" class="mt-3 flex items-center justify-between">                                      
-                                        <button type="button" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                      <div class="mt-3 flex items-center justify-between">                                      
+                                        <button onclick="onCommentButtonClicked()" type="button" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                           Comment
                                         </button>
                                       </div>
@@ -115,15 +103,13 @@
     </div>
   </div>
   
-  <script text="text/javascript">
+  <script type="text/javascript">
     const REALM_APP = new Realm.App({
       id: "wazobia-ydiaara"
     });
 
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const SITE_ID_PARAM = URL_PARAMS.get("site-id");
-
-    console.log(SITE_ID_PARAM);
     
     const SITE_LIST = [
     {
@@ -176,16 +162,70 @@
     }
 ];
 
-const SITE_DATA = SITE_LIST.find(site => SITE_ID_PARAM === site.sight_id.toString());
+    const SITE_DATA = SITE_LIST.find(site=> SITE_ID_PARAM === site.sight_id.toString());
 
-const SITE_IMAGE = document.getElementById("site-image");
-const SITE_NAME= document.getElementById("site-name");
-const SITE_LOCATION = document.getElementById("site-location");
+  const SITE_IMAGE = document.getElementById("site-image");
+  const SITE_NAME = document.getElementById("site-name");
+  const SITE_LOCATION = document.getElementById("site-location");
 
-SITE_IMAGE.src = SITE_DATA.image_url;
-SITE_IMAGE.alt = SITE_DATA.name;
-SITE_NAME.innerText = SITE_DATA.name;
-SITE_LOCATION.innerText = SITE_DATA.location;
+  SITE_IMAGE.src = SITE_DATA.image_url;
+  SITE_IMAGE.alt = SITE_DATA.name;
+  SITE_NAME.innerText = SITE_DATA.name;
+  SITE_LOCATION.innerText = SITE_DATA.location;
+
+  async function onUpdateButtonClicked(updateButtonElement){
+    window.location.href = `comment-update.html?comment-id=${updateButtonElement.dataset.siteid}`;
+  }
+
+async function onDeleteButtonClicked(buttonElement){
+      console.log(buttonElement.id)
+      const COMMENT_OBJECT_ID = Realm.BSON.ObjectId.createFromHexString(buttonElement.id)
+  try {
+    const DELETE_COMMENT = await REALM_APP.currentUser
+      .mongoClient("mongodb-atlas")
+      .db("wazobia")
+      .collection("comments")
+      .deleteOne({
+        _id: COMMENT_OBJECT_ID,
+    });
+        console.log(DELETE_COMMENT);
+
+        const COMMENTS_FROM_DB = await REALM_APP.currentUser
+        .mongoClient("mongodb-atlas")
+        .db("wazobia")
+        .collection("comments")
+        .find({
+          site_id: SITE_ID_PARAM
+        });
+        
+
+        const COMMENTS_CONTAINER = document.getElementById("comment-list-container");
+          COMMENTS_CONTAINER.innerHTML = "";
+          COMMENTS_FROM_DB.forEach((comment)=> {
+          const SINGLE_COMMENT = `
+                                    <li>
+                                      <div class="flex space-x-3">                                       
+                                        <div>                                        
+                                          <div class="mt-1 text-sm text-gray-700">
+                                            <p class="comment-text">${comment.comment}</p>
+                                          </div>
+                                          <div class="mt-2 text-sm space-x-2">                                           
+                          <button id="${comment._id.toString()}" onclick="onDeleteButtonClicked(this)" type="button" class="text-gray-900 font-medium">Delete</button>
+                                            <button 
+                                              onclick="onUpdateButtonClicked(this)"
+                                              data-siteID="${comment._id.toString()}"
+                                              type="button" class="text-gray-900 font-medium">Update</button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </li> `;
+
+          COMMENTS_CONTAINER.insertAdjacentHTML("beforeend", SINGLE_COMMENT);
+        });
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 async function onCommentButtonClicked(){
   const COMMENT_BOX = document.getElementById("comment");
@@ -213,7 +253,8 @@ async function onCommentButtonClicked(){
         console.log(COMMENTS_FROM_DB);
 
         const COMMENTS_CONTAINER = document.getElementById("comment-list-container");
-        COMMENTS_FROM_DB.forEach((comment) => {
+          COMMENTS_CONTAINER.innerHTML = "";
+          COMMENTS_FROM_DB.forEach((comment)=> {
           const SINGLE_COMMENT = `
                                     <li>
                                       <div class="flex space-x-3">                                       
@@ -222,8 +263,11 @@ async function onCommentButtonClicked(){
                                             <p class="comment-text">${comment.comment}</p>
                                           </div>
                                           <div class="mt-2 text-sm space-x-2">                                           
-                                            <button type="button" class="text-gray-900 font-medium">Delete</button>
-                                            <button type="button" class="text-gray-900 font-medium">Update</button>
+                                            <button id="${comment._id.toString()}" onclick="onDeleteButtonClicked(this)" type="button" class="text-gray-900 font-medium">Delete</button>
+                                            <button 
+                                            onclick="onUpdateButtonClicked(this)"
+                                            data-siteID="${comment._id.toString()}"
+                                            type="button" class="text-gray-900 font-medium">Update</button>
                                           </div>
                                         </div>
                                       </div>
@@ -237,6 +281,7 @@ async function onCommentButtonClicked(){
   } catch (error) {
     console.log(error);
   }
+      
 }
 
   </script>
