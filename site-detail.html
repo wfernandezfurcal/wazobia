@@ -231,16 +231,27 @@ async function onCommentButtonClicked(){
   const COMMENT_BOX = document.getElementById("comment");
 
   try {
-    const INSERT_COMMENT = await REALM_APP.currentUser
-        .mongoClient("mongodb-atlas")
-        .db("wazobia")
-        .collection("comments")
-        .insertOne({
-          site_id: SITE_ID_PARAM,
+    const INSERT_COMMENT_WITH_FUNCTION = await REALM_APP.currentUser.callFunction(
+      "COMMENT",
+      {
+        site_id: SITE_ID_PARAM,
           comment: COMMENT_BOX.value,
           commenter: REALM_APP?.currentUser?.id
-        });
-        console.log(INSERT_COMMENT);
+      }
+    )
+
+    console.log(INSERT_COMMENT_WITH_FUNCTION);
+
+    // const INSERT_COMMENT = await REALM_APP.currentUser
+    //     .mongoClient("mongodb-atlas")
+    //     .db("wazobia")
+    //     .collection("comments")
+    //     .insertOne({
+    //       site_id: SITE_ID_PARAM,
+    //       comment: COMMENT_BOX.value,
+    //       commenter: REALM_APP?.currentUser?.id
+    //     });
+    //     console.log(INSERT_COMMENT);
 
       const COMMENTS_FROM_DB = await REALM_APP.currentUser
         .mongoClient("mongodb-atlas")
